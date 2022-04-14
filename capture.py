@@ -350,7 +350,7 @@ while True:
         if role == "TOP":
             cap_top.set(cv2.CAP_PROP_SETTINGS, 1)
             if mm:
-                FOCUS_SETUP['top'] = cap_bottom.get(cv2.CAP_PROP_FOCUS) - 0.0145 * mm
+                FOCUS_SETUP['top'] = cap_top.get(cv2.CAP_PROP_FOCUS) - 0.0145 * mm
         if role == "BOTTOM":
             cap_bottom.set(cv2.CAP_PROP_SETTINGS, 1)
             FOCUS_SETUP['bottom'] = cap_bottom.get(cv2.CAP_PROP_FOCUS)
