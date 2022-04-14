@@ -345,22 +345,23 @@ while True:
         ser.write(b"4")
         role = "SIDE"
     if key == ord("s"):
+        if role == "TOP" and mm:
+            FOCUS_SETUP['top'] = cap_top.get(cv2.CAP_PROP_FOCUS) - (0.0145 * mm)
+            logger.warning(f"カメラ[TOP]のフォーカスを{FOCUS_SETUP['top']}に設定しました")
+        if role == "BOTTOM":
+            FOCUS_SETUP['bottom'] = cap_bottom.get(cv2.CAP_PROP_FOCUS)
+            logger.warning(f"カメラ[BOTTOM]のフォーカスを{FOCUS_SETUP['bottom']}に設定しました")
+        if role == "SIDE":
+            FOCUS_SETUP['side'] = cap_side.get(cv2.CAP_PROP_FOCUS)
+            logger.warning(f"カメラ[SIDE]のフォーカスを{FOCUS_SETUP['side']}に設定しました")
         save_focus()
     if key == ord("c"):
         if role == "TOP":
             cap_top.set(cv2.CAP_PROP_SETTINGS, 1)
-            if mm:
-                FOCUS_SETUP['top'] = cap_top.get(cv2.CAP_PROP_FOCUS) - (0.0145 * mm)
-                logger.warning(f"カメラ[TOP]のフォーカスを{FOCUS_SETUP['top']}に設定しました")
-
         if role == "BOTTOM":
             cap_bottom.set(cv2.CAP_PROP_SETTINGS, 1)
-            FOCUS_SETUP['bottom'] = cap_bottom.get(cv2.CAP_PROP_FOCUS)
-            logger.warning(f"カメラ[BOTTOM]のフォーカスを{FOCUS_SETUP['bottom']}に設定しました")
         if role == "SIDE":
             cap_side.set(cv2.CAP_PROP_SETTINGS, 1)
-            FOCUS_SETUP['side'] = cap_side.get(cv2.CAP_PROP_FOCUS)
-            logger.warning(f"カメラ[SIDE]のフォーカスを{FOCUS_SETUP['side']}に設定しました")
 
     if key == 13 or f == 1:
         stage = 1
