@@ -35,7 +35,7 @@ try:
         FOCUS_SETUP['top'] = focus_data.get('top')
         FOCUS_SETUP['bottom'] = focus_data.get('bottom')
         FOCUS_SETUP['side'] = focus_data.get('side')
-        logger.info("フォーカス設定をロードしました")
+        logger.info("フォーカス設定を読み込みました")
 except:
     pass
 
@@ -43,6 +43,7 @@ except:
 def save_focus():
     with open('focus.json', 'wt', encoding='utf-8') as f:
         f.write(json.dumps(FOCUS_SETUP))
+        logger.info("フォーカス設定を保存しました")
 
 
 @retry(wait=wait_fixed(2))
@@ -343,17 +344,19 @@ while True:
     if key == ord("4"):
         ser.write(b"4")
         role = "SIDE"
+    if key == ord("s"):
+        save_focus()
     if key == ord("c"):
         if role == "TOP":
             cap_top.set(cv2.CAP_PROP_SETTINGS, 1)
+            if mm:
+                FOCUS_SETUP['top'] = cap_bottom.get(cv2.CAP_PROP_FOCUS) - 0.0145 * mm
         if role == "BOTTOM":
             cap_bottom.set(cv2.CAP_PROP_SETTINGS, 1)
             FOCUS_SETUP['bottom'] = cap_bottom.get(cv2.CAP_PROP_FOCUS)
-            save_focus()
         if role == "SIDE":
             cap_side.set(cv2.CAP_PROP_SETTINGS, 1)
-            FOCUS_SETUP['side'] = cap_bottom.get(cv2.CAP_PROP_FOCUS)
-            save_focus()
+            FOCUS_SETUP['side'] = cap_side.get(cv2.CAP_PROP_FOCUS)
 
     if key == 13 or f == 1:
         stage = 1
