@@ -3,3 +3,6 @@ pyzbar
 numpy
 pyserial
 PyTurboJPEG
+opencv-python
+requests
+tanacity

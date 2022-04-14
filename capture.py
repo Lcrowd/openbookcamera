@@ -2,7 +2,6 @@
 
 import serial
 import cv2
-import numpy as np
 import time
 import datetime
 import os
@@ -10,16 +9,28 @@ import json
 import platform
 import logging
 import coloredlogs
+import re
+import requests
+from tenacity import retry, wait_fixed
 from turbojpeg import TurboJPEG
 
 DATAPATH = os.path.normpath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "./data/")
 )
-IS_NEW4K = True  # 新しいV4Kファームウェア（製造番号10以下ではFalseを指定）
+IS_NEW4K = False  # 新しいV4Kファームウェア（製造番号10以下ではFalseを指定）
 
 logger = logging.getLogger("システム")
 coloredlogs.install(level="DEBUG", fmt="%(asctime)s %(levelname)s %(message)s")
 jpeg = TurboJPEG()
+
+
+@retry(wait=wait_fixed(2))
+def create_id() -> str:
+    logger.info("タスクIDを取得しています...")
+    response = requests.get('https://next.crowd4u.org/runs/40/get_task')  # runs以下のタスク番号は，タスク発行時に最初に決まる．
+    response.raise_for_status()
+    task_num = re.findall(r'/[0-9]+', response.text)
+    return task_num[0]
 
 
 def barcode_recognition(images):
@@ -28,7 +39,7 @@ def barcode_recognition(images):
 
     rs = []
     for image, role in images:
-        result = decode(image, symbols=[ZBarSymbol.EAN13, ZBarSymbol.CODABAR])
+        result = decode(image, symbols=[ZBarSymbol.EAN13, ZBarSymbol.ISBN10, ZBarSymbol.CODABAR])
         for item in result:
             r = {
                 "role": role,
@@ -49,7 +60,6 @@ def barcode_recognition(images):
 
 
 def connect_controller():
-    ser = None
     for port in range(1, 10):
         try:
             ser = serial.Serial("COM%d" % port, 115200, timeout=1, write_timeout=1)
@@ -108,13 +118,13 @@ def initialize_camera(cap, role):
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
         cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
-        for x in range(1, 50):
+        for _ in range(1, 50):
             cap.read()
 
     cap.set(cv2.CAP_PROP_FPS, 15)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 2448)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 3264)
-    for x in range(1, 5):
+    for _ in range(1, 5):
         cap.read()
 
     cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)  # オートフォーカスオフ
@@ -341,8 +351,11 @@ while True:
     if stage == 3:
         ser.write(b"3")
         role = "SIDE"
+
         now = datetime.datetime.now()
-        save_id = now.strftime("%Y%m%d_%H%M%S")
+        # save_id = now.strftime("%Y%m%d_%H%M%S")
+        save_id = create_id()
+
         fn = DATAPATH + "/" + save_id + "/"
         logger.warning("撮影ID[%s]" % (save_id))
 
