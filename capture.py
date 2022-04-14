@@ -23,6 +23,27 @@ logger = logging.getLogger("システム")
 coloredlogs.install(level="DEBUG", fmt="%(asctime)s %(levelname)s %(message)s")
 jpeg = TurboJPEG()
 
+# 設定をロードする
+FOCUS_SETUP = {
+    'top': 86,
+    'bottom': 112,
+    'side': 95
+}
+try:
+    with open('focus.json', 'rt', encoding='utf-8') as f:
+        focus_data = json.loads(f.read())
+        FOCUS_SETUP['top'] = focus_data.get('top')
+        FOCUS_SETUP['bottom'] = focus_data.get('bottom')
+        FOCUS_SETUP['side'] = focus_data.get('side')
+        logger.info("フォーカス設定をロードしました")
+except:
+    pass
+
+
+def save_focus():
+    with open('focus.json', 'wt', encoding='utf-8') as f:
+        f.write(json.dumps(FOCUS_SETUP))
+
 
 @retry(wait=wait_fixed(2))
 def create_task() -> str:
@@ -145,14 +166,14 @@ def initialize_camera(cap, role):
     cap.set(cv2.CAP_PROP_SATURATION, 64)
     cap.set(cv2.CAP_PROP_HUE, 0)
     if role == "BOTTOM":
-        cap.set(cv2.CAP_PROP_FOCUS, 271 if IS_NEW4K else 112)
+        cap.set(cv2.CAP_PROP_FOCUS, 271 if IS_NEW4K else FOCUS_SETUP['bottom'])
         cap.set(cv2.CAP_PROP_BRIGHTNESS, 0 if IS_NEW4K else -50)
         cap.set(cv2.CAP_PROP_GAMMA, 110 if IS_NEW4K else 150)
         if IS_NEW4K:
             cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, float(0.25))
             cap.set(cv2.CAP_PROP_EXPOSURE, float(-7))
     elif role == "SIDE":
-        cap.set(cv2.CAP_PROP_FOCUS, 235 if IS_NEW4K else 95)  # フォーカス設定
+        cap.set(cv2.CAP_PROP_FOCUS, 235 if IS_NEW4K else FOCUS_SETUP['side'])  # フォーカス設定
         cap.set(cv2.CAP_PROP_BRIGHTNESS, 0 if IS_NEW4K else -100)
         cap.set(cv2.CAP_PROP_GAMMA, 110 if IS_NEW4K else 110)
         if IS_NEW4K:
@@ -241,7 +262,7 @@ logger.info("動作を開始しました")
 while True:
     f = 0
     while ser.inWaiting():
-        line = ser.readline().strip().decode("utf-8")
+        line = ser.readline().strip().decode("utf-8", "ignore")
         if line == "ON":
             logger.warning("[検出]自動スキャンプロセスを開始します")
             f = 1
@@ -254,7 +275,7 @@ while True:
             if IS_NEW4K:
                 focus = int(0.5 * mm + 180)
             else:
-                focus = int(0.0145 * mm + 85.886)
+                focus = int(0.0145 * mm + FOCUS_SETUP['top'])
             logger.info("撮影対象の高さは%dmm、カメラ[TOP]のフォーカスを%dに設定します" % (mm, focus))
             cap_top.set(cv2.CAP_PROP_FOCUS, focus)
             cap_top.read()
@@ -327,8 +348,12 @@ while True:
             cap_top.set(cv2.CAP_PROP_SETTINGS, 1)
         if role == "BOTTOM":
             cap_bottom.set(cv2.CAP_PROP_SETTINGS, 1)
+            FOCUS_SETUP['bottom'] = cap_bottom.get(cv2.CAP_PROP_FOCUS)
+            save_focus()
         if role == "SIDE":
             cap_side.set(cv2.CAP_PROP_SETTINGS, 1)
+            FOCUS_SETUP['side'] = cap_bottom.get(cv2.CAP_PROP_FOCUS)
+            save_focus()
 
     if key == 13 or f == 1:
         stage = 1
