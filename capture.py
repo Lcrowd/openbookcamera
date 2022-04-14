@@ -276,7 +276,7 @@ while True:
             if IS_NEW4K:
                 focus = int(0.5 * mm + 180)
             else:
-                focus = int(0.0145 * mm + FOCUS_SETUP['top'])
+                focus = 0.0145 * mm + FOCUS_SETUP['top']
             logger.info("撮影対象の高さは%dmm、カメラ[TOP]のフォーカスを%dに設定します" % (mm, focus))
             cap_top.set(cv2.CAP_PROP_FOCUS, focus)
             cap_top.read()
@@ -350,13 +350,17 @@ while True:
         if role == "TOP":
             cap_top.set(cv2.CAP_PROP_SETTINGS, 1)
             if mm:
-                FOCUS_SETUP['top'] = cap_top.get(cv2.CAP_PROP_FOCUS) - 0.0145 * mm
+                FOCUS_SETUP['top'] = cap_top.get(cv2.CAP_PROP_FOCUS) - (0.0145 * mm)
+                logger.warning(f"カメラ[TOP]のフォーカスを{FOCUS_SETUP['top']}に設定しました")
+
         if role == "BOTTOM":
             cap_bottom.set(cv2.CAP_PROP_SETTINGS, 1)
             FOCUS_SETUP['bottom'] = cap_bottom.get(cv2.CAP_PROP_FOCUS)
+            logger.warning(f"カメラ[BOTTOM]のフォーカスを{FOCUS_SETUP['bottom']}に設定しました")
         if role == "SIDE":
             cap_side.set(cv2.CAP_PROP_SETTINGS, 1)
             FOCUS_SETUP['side'] = cap_side.get(cv2.CAP_PROP_FOCUS)
+            logger.warning(f"カメラ[SIDE]のフォーカスを{FOCUS_SETUP['side']}に設定しました")
 
     if key == 13 or f == 1:
         stage = 1
