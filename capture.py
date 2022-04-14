@@ -366,53 +366,62 @@ while True:
         fn = DATAPATH + "/" + save_id + "/"
         logger.warning("撮影ID[%s]" % (save_id))
 
-        os.makedirs(fn)
-
-        for m in [
-            ("TOP", "top.jpg", stock_top),
-            ("BOTTOM", "bottom.jpg", stock_bottom),
-            ("SIDE1", "side1.jpg", stock_side1),
-            ("SIDE2", "side2.jpg", stock_side2),
-            ("SIDE3", "side3.jpg", stock_side3),
-        ]:
-            write_jpeg(fn + m[1], m[2])
-            logger.info("[%s]書き込み完了" % m[0])
-
-        with open(fn + "metadata.json", "w") as f:
-            f.write(
-                json.dumps(
-                    {
-                        "version": 1,
-                        "thickness": mm,
-                        "timestamp": now.strftime("%Y/%m/%d %H:%M:%S"),
-                    },
-                    indent=4,
-                )
-            )
+        os.makedirs(fn, exist_ok=True)
         barcode = barcode_recognition([(stock_top, "top"), (stock_bottom, "bottom")])
-        with open(fn + "barcode.json", "w") as f:
-            f.write(
-                json.dumps(
-                    {
-                        "recognition_engine": "zbar",
-                        "platform": platform.system(),
-                        "result": barcode,
-                    },
-                    indent=4,
-                )
-            )
-
-        post_task(save_id, {
-            "version": 1,
-            "thickness": mm,
-            "timestamp": now.strftime("%Y/%m/%d %H:%M:%S"),
-            "nw7": "",
-            "isbn": "",
-        })
-
+        nw7 = ''
+        isbn = ''
         for p in barcode:
             logger.info("バーコードを認識しました [%s]" % p["data"])
+            if p["type"] == 'CODABAR':
+                nw7 = p["data"].strip('A').strip('B')
+            elif (len(p["data"]) == 13 and p["data"].startswith('978')) or len(p['data']) == 10:
+                isbn = p["data"]
 
+        if nw7:
+
+            for m in [
+                ("TOP", "top.jpg", stock_top),
+                ("BOTTOM", "bottom.jpg", stock_bottom),
+                ("SIDE1", "side1.jpg", stock_side1),
+                ("SIDE2", "side2.jpg", stock_side2),
+                ("SIDE3", "side3.jpg", stock_side3),
+            ]:
+                write_jpeg(fn + m[1], m[2])
+                logger.info("[%s]書き込み完了" % m[0])
+
+            with open(fn + "metadata.json", "w") as f:
+                f.write(
+                    json.dumps(
+                        {
+                            "version": 1,
+                            "thickness": mm,
+                            "timestamp": now.strftime("%Y/%m/%d %H:%M:%S"),
+                        },
+                        indent=4,
+                    )
+                )
+
+            with open(fn + "barcode.json", "w") as f:
+                f.write(
+                    json.dumps(
+                        {
+                            "recognition_engine": "zbar",
+                            "platform": platform.system(),
+                            "result": barcode,
+                        },
+                        indent=4,
+                    )
+                )
+
+            post_task(save_id, {
+                "version": 1,
+                "thickness": mm,
+                "timestamp": now.strftime("%Y/%m/%d %H:%M:%S"),
+                "nw7": nw7,
+                "isbn": isbn,
+            })
+        else:
+            logger.error("資料コードを認識できませんでした。")
         stage = 0
         logger.warning("次の撮影を待機しています...")
         continue
