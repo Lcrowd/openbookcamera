@@ -25,12 +25,19 @@ jpeg = TurboJPEG()
 
 
 @retry(wait=wait_fixed(2))
-def create_id() -> str:
+def create_task() -> str:
     logger.info("タスクIDを取得しています...")
     response = requests.get('https://next.crowd4u.org/runs/40/get_task')  # runs以下のタスク番号は，タスク発行時に最初に決まる．
     response.raise_for_status()
     task_num = re.findall(r'/[0-9]+', response.text)
     return task_num[0]
+
+
+@retry(wait=wait_fixed(2))
+def post_task(id_: str, param: dict):
+    logger.info("メタデータを登録しています...")
+    response = requests.post('https://next.crowd4u.org/task_assignments' + id_, param)
+    response.raise_for_status()
 
 
 def barcode_recognition(images):
@@ -354,7 +361,7 @@ while True:
 
         now = datetime.datetime.now()
         # save_id = now.strftime("%Y%m%d_%H%M%S")
-        save_id = create_id()
+        save_id = create_task()
 
         fn = DATAPATH + "/" + save_id + "/"
         logger.warning("撮影ID[%s]" % (save_id))
@@ -394,6 +401,15 @@ while True:
                     indent=4,
                 )
             )
+
+        post_task(save_id, {
+            "version": 1,
+            "thickness": mm,
+            "timestamp": now.strftime("%Y/%m/%d %H:%M:%S"),
+            "nw7": "",
+            "isbn": "",
+        })
+
         for p in barcode:
             logger.info("バーコードを認識しました [%s]" % p["data"])
 

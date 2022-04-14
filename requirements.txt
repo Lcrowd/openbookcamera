@@ -5,4 +5,4 @@ pyserial
 PyTurboJPEG
 opencv-python
 requests
-tanacity
+tenacity
