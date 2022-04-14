@@ -80,7 +80,7 @@ def connect_controller():
                 ser.flush()
                 time.sleep(0.5)
                 if ser.in_waiting > 0:
-                    line = ser.readline().strip().decode("utf-8")
+                    line = ser.readline().strip().decode("utf-8", 'ignore')
                     if line == "ACK":
                         return ser
             ser.close()
