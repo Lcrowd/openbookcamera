@@ -107,3 +107,7 @@ data/
 web/node_modules/
 web/.cache/
 web/build/
+
+# macOS
+._*
+.DS_Store
