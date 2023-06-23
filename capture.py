@@ -393,13 +393,11 @@ while True:
         role = "SIDE"
 
         now = datetime.datetime.now()
-        # save_id = now.strftime("%Y%m%d_%H%M%S")
-        save_id = create_task()
+        save_id = now.strftime("%Y%m%d_%H%M%S")
+        # save_id = create_task() *1
 
-        fn = DATAPATH + "/" + save_id + "/"
         logger.warning("撮影ID[%s]" % (save_id))
 
-        os.makedirs(fn, exist_ok=True)
         barcode = barcode_recognition([(stock_top, "top"), (stock_bottom, "bottom")])
         nw7 = ''
         isbn = ''
@@ -409,7 +407,10 @@ while True:
                 nw7 = p["data"].strip('A').strip('B')
             elif (len(p["data"]) == 13 and p["data"].startswith('978')) or len(p['data']) == 10:
                 isbn = p["data"]
+                save_id = now.strftime(isbn+"_%Y%m%d_%H%M%S")
 
+        fn = DATAPATH + "/" + save_id + "/"
+        os.makedirs(fn, exist_ok=True)
         for m in [
             ("TOP", "top.jpg", stock_top),
             ("BOTTOM", "bottom.jpg", stock_bottom),
@@ -444,13 +445,13 @@ while True:
                 )
             )
 
-        post_task(save_id, {
-            "version": 1,
-            "thickness": mm,
-            "timestamp": now.strftime("%Y/%m/%d %H:%M:%S"),
-            "nw7": nw7,
-            "isbn": isbn,
-        })
+        #post_task(save_id, {
+        #    "version": 1,
+        #    "thickness": mm,
+        #    "timestamp": now.strftime("%Y/%m/%d %H:%M:%S"),
+        #    "nw7": nw7,
+        #    "isbn": isbn,
+        #})
 
         stage = 0
         logger.warning("次の撮影を待機しています...")
