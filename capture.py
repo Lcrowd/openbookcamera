@@ -18,6 +18,8 @@ DATAPATH = os.path.normpath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "./data/")
 )
 IS_NEW4K = False  # 新しいV4Kファームウェア（製造番号10以下ではFalseを指定）
+# RUNid は適宜書き換える
+TASK_URL = 'https://next.crowd4u.org/runs/5dde3f74-0fb3-49d0-897b-f4b316ec6fac'
 
 logger = logging.getLogger("システム")
 coloredlogs.install(level="DEBUG", fmt="%(asctime)s %(levelname)s %(message)s")
@@ -49,16 +51,24 @@ def save_focus():
 @retry(wait=wait_fixed(2))
 def create_task() -> str:
     logger.info("タスクIDを取得しています...")
-    response = requests.get('https://next.crowd4u.org/runs/40/get_task')  # runs以下のタスク番号は，タスク発行時に最初に決まる．
+    # runs以下のタスク番号は，タスク発行時に最初に決まる．
+    response = requests.get(f'{TASK_URL}/get_task')
     response.raise_for_status()
-    task_num = re.findall(r'/[0-9]+', response.text)
-    return task_num[0]
+    task_num = re.search(
+        r'/task_assignments/([0-9a-z\-]+)',
+        response.text
+    ).groups()[0]
+
+    return task_num
 
 
 @retry(wait=wait_fixed(2))
 def post_task(id_: str, param: dict):
     logger.info("メタデータを登録しています...")
-    response = requests.post('https://next.crowd4u.org/task_assignments' + id_, param)
+    response = requests.post(
+        f'https://next.crowd4u.org/task_assignments/{id_}',
+        param
+    )
     response.raise_for_status()
 
 
