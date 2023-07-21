@@ -404,7 +404,7 @@ while True:
 
         now = datetime.datetime.now()
         save_id = now.strftime("%Y%m%d_%H%M%S")
-        # save_id = create_task() *1
+        task_id = create_task()
 
         logger.warning("撮影ID[%s]" % (save_id))
 
@@ -455,13 +455,14 @@ while True:
                 )
             )
 
-        #post_task(save_id, {
-        #    "version": 1,
-        #    "thickness": mm,
-        #    "timestamp": now.strftime("%Y/%m/%d %H:%M:%S"),
-        #    "nw7": nw7,
-        #    "isbn": isbn,
-        #})
+        post_task(task_id, {
+            "version": 1,
+            "thickness": mm,
+            "timestamp": now.strftime("%Y/%m/%d %H:%M:%S"),
+            "nw7": nw7,
+            "save_id": save_id,
+            "isbn": isbn,
+        })
 
         stage = 0
         logger.warning("次の撮影を待機しています...")
