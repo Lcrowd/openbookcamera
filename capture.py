@@ -65,6 +65,13 @@ def create_task() -> str:
 @retry(wait=wait_fixed(2))
 def post_task(id_: str, param: dict):
     logger.info("メタデータを登録しています...")
+
+    # callback_url と result_group の指定がないと登録できない
+    if 'callback_url' not in param:
+        param['callback_url'] = ''
+    if 'result_group' not in param:
+        param['result_group'] = ''
+
     response = requests.post(
         f'https://next.crowd4u.org/task_assignments/{id_}',
         param
